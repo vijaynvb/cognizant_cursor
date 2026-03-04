@@ -1,0 +1,45 @@
+1. CLI -> pre defined commaind -> rm 
+2. NLP -> delete a file, put the file in trash 
+
+
+train -> 
+    voice -> phonim s -> 
+
+execution
+    analog -> sample -> ah, ba, -> neural  network -> text
+
+4 bytes = 1 token 
+images and audio -> 
+i/p = what is 1 + 1 
+o/p = 2
+
+Client Application        ->           Server
+Chat GTP                  ->           LLM [stateless]
+Question + History        ->[tokens]   llm [100]
+
+
+client -> cursor, copilot, chatgpt
+inference-> LLM 
+    1. prompt engg
+    2. RAG 
+    3. Fine Tuniing -> [Configurations] 
+
+
+
+PDF -> P&L of a company -> latest and greatest 
+vector -> local -> database -> semactic search [what is is the profits]
+    set of matched 
+
+propmt ->  what is the profits + [set of matched ] ->  LLM -> tool caling -> MCP Web Search -> 
+
+1. Hallucination: 
+    LLM -> [Geo location, BFSI, Health care]
+
+    Instruction -> you are a banking expert 
+    Prompt -> where is the bank?
+
+ask -> No Tools [MCP, Extention] -> LLM 
+
+agent -> tools [] -> no Deep Reasoning 
+
+plan -> tools [] -> test playwright selenium MCP -> Deep Reasoning -> 0.98 -> creative steps
