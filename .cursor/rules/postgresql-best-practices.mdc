@@ -1,0 +1,55 @@
+---
+description: PostgreSQL database standards and best practices
+globs: "**/*.sql,**/migrations/**,**/schema/**"
+alwaysApply: false
+---
+
+# PostgreSQL Best Practices
+
+## Security
+- **Always use parameterized queries** — never concatenate user input into SQL; use `$1`, `$2` placeholders or an ORM's parameter binding.
+- **Principle of least privilege** — create dedicated DB roles per application; avoid `postgres` superuser for app connections.
+- **Store secrets externally** — use env vars or a secrets manager for connection strings; never commit credentials.
+
+## Schema & Naming
+- Use **snake_case** for tables, columns, and indexes (e.g., `user_created_at`, `order_items`).
+- Use **plural** table names (e.g., `users`, `order_items`).
+- Add `created_at` and `updated_at` timestamps (type `timestamptz`) to mutable tables.
+- Prefer `timestamptz` over `timestamp` for timezone-aware data; store in UTC.
+
+## Indexing
+- Index foreign keys and frequently filtered/sorted columns.
+- Use composite indexes for multi-column `WHERE`/`ORDER BY` (order matters).
+- Avoid over-indexing; each index adds write cost.
+- Use `EXPLAIN (ANALYZE, BUFFERS)` to validate query plans before adding indexes.
+
+## Queries & Performance
+- Use **transactions** for multi-step operations; keep them short.
+- Avoid N+1 queries; prefer `JOIN`s or batch fetches.
+- Use `LIMIT` on large result sets; paginate with `OFFSET`/`LIMIT` or keyset pagination.
+- Prefer `EXISTS` over `COUNT(*)` when checking for presence.
+
+## Migrations
+- Make migrations **idempotent** where possible (e.g., `IF NOT EXISTS`).
+- Never modify or delete applied migrations; add new ones to fix schema.
+- Include both `up` and `down` (rollback) scripts.
+
+## Example: Parameterized Query
+
+```sql
+-- ❌ BAD — SQL injection risk
+SELECT * FROM users WHERE email = '" + email + "';
+
+-- ✅ GOOD — parameterized
+SELECT * FROM users WHERE email = $1;
+```
+
+## Example: Transaction Usage
+
+```sql
+-- ✅ GOOD — atomic multi-step operation
+BEGIN;
+  INSERT INTO orders (user_id, total) VALUES ($1, $2) RETURNING id;
+  INSERT INTO order_items (order_id, product_id, quantity) VALUES ($3, $4, $5);
+COMMIT;
+```
