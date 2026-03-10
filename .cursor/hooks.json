@@ -1,0 +1,50 @@
+{
+    "version": 1,
+    "hooks": {
+      "sessionEnd": [
+        {
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/audit.ps1"
+        }
+      ],
+      "beforeShellExecution": [
+        {
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/audit.ps1"
+        }
+      ],
+      "beforeMCPExecution": [
+        {
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/audit.ps1"
+        }
+      ],
+      "afterShellExecution": [
+        {
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/audit.ps1"
+        }
+      ],
+      "afterMCPExecution": [
+        {
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/audit.ps1"
+        }
+      ],
+      "afterFileEdit": [
+        {
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/audit.ps1"
+        }
+      ],
+      "beforeSubmitPrompt": [
+        {
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/audit.ps1"
+        }
+      ],
+      "preCompact": [
+        {
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/audit.ps1"
+        }
+      ],
+      "stop": [
+        {
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/audit.ps1"
+        }
+      ]
+    }
+  }
