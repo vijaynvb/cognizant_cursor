@@ -1,0 +1,25 @@
+
+Rules: 
+
+1. user specific
+description: Global coding standards
+
+1. Prioritize clean, efficient, maintainable Express (Node.js + TypeScript) and React code.
+2. Adhere to SOLID, DRY, and KISS principles in all solutions.
+3. Prefer strong typing — never use `any` in TypeScript code.
+4. Write clear, concise documentation comments for public methods.
+
+2. project specific: 
+
+### Express Backend Rules (Node.js + TypeScript)
+1. Prefer TypeScript with strict settings; avoid `any` and unsafe type assertions.
+2. Validate all request inputs (params/body/query) and return consistent error shapes.
+3. Use centralized error handling middleware; never leak stack traces to clients.
+4. Use structured logging with request IDs/correlation IDs.
+5. Use Jest + Supertest for API tests; keep critical routes and business logic covered.
+
+### React Frontend Rules
+1. Use functional React components with Hooks; avoid class components.
+2. Prefer React Query for data fetching and caching over manual useEffect.
+3. Always create PropTypes or TypeScript interfaces for component props.
+4. Avoid inline styles — use CSS modules or styled components.
