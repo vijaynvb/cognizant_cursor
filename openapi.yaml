@@ -1,0 +1,1409 @@
+openapi: 3.0.3
+info:
+  title: To-Do App API
+  description: |
+    Internal task-management API for improving productivity, visibility, and accountability.
+    Supports task CRUD, assignment, priorities, due dates, reminders, and basic reporting.
+    Designed for Express (TypeScript), React frontend, and Postman import.
+  version: 1.0.0
+  contact:
+    name: IT/Operations
+  license:
+    name: Internal Use Only
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production
+  - url: http://localhost:3000/v1
+    description: Local development
+
+tags:
+  - name: Authentication
+    description: SSO and internal login
+  - name: Tasks
+    description: Task CRUD and management
+  - name: Assignments
+    description: Task assignment and reassignment
+  - name: Comments
+    description: Task comments
+  - name: Tags
+    description: Task tags
+  - name: Notifications
+    description: Reminders and notifications
+  - name: Reports
+    description: Completed, overdue, and productivity metrics
+  - name: Users
+    description: User listing for assignment lookup
+
+paths:
+  # ==================== Authentication ====================
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Internal login
+      description: Authenticate with email and password (internal login flow)
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: john.doe@company.com
+              password: securePassword123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                expiresIn: 3600
+                user:
+                  id: usr_001
+                  email: john.doe@company.com
+                  displayName: John Doe
+                  role: user
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/sso/callback:
+    post:
+      tags:
+        - Authentication
+      summary: SSO callback
+      description: Handle SSO provider callback for authentication
+      operationId: ssoCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SsoCallbackRequest'
+      responses:
+        '200':
+          description: SSO authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid SSO token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh token
+      description: Obtain new access token using refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Tasks ====================
+  /tasks:
+    get:
+      tags:
+        - Tasks
+      summary: List tasks
+      description: Get paginated list of tasks with optional filters. Users see own tasks; managers see team tasks.
+      operationId: listTasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/statusParam'
+        - $ref: '#/components/parameters/priorityParam'
+        - $ref: '#/components/parameters/assigneeParam'
+        - $ref: '#/components/parameters/overdueParam'
+        - $ref: '#/components/parameters/tagParam'
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/sortParam'
+      responses:
+        '200':
+          description: Paginated list of tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+              example:
+                data:
+                  - id: tsk_001
+                    title: Complete API design
+                    description: Design OpenAPI spec for To-Do App
+                    priority: high
+                    status: inProgress
+                    dueDate: '2025-03-15'
+                    assigneeId: usr_001
+                    assigneeName: John Doe
+                    tags: ['api', 'design']
+                    isOverdue: false
+                    createdAt: '2025-03-09T10:00:00Z'
+                    updatedAt: '2025-03-09T14:30:00Z'
+                pagination:
+                  page: 1
+                  limit: 20
+                  totalCount: 45
+                  totalPages: 3
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Tasks
+      summary: Create task
+      description: Create a new task
+      operationId: createTask
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+            example:
+              title: Review quarterly report
+              description: Complete Q1 financial review
+              priority: high
+              status: todo
+              dueDate: '2025-03-20'
+              assigneeId: usr_002
+              tags: ['finance', 'quarterly']
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: tsk_002
+                title: Review quarterly report
+                description: Complete Q1 financial review
+                priority: high
+                status: todo
+                dueDate: '2025-03-20'
+                assigneeId: usr_002
+                assigneeName: Jane Smith
+                tags: ['finance', 'quarterly']
+                isOverdue: false
+                createdAt: '2025-03-09T15:00:00Z'
+                updatedAt: '2025-03-09T15:00:00Z'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{taskId}:
+    get:
+      tags:
+        - Tasks
+      summary: Get task by ID
+      description: Retrieve a single task by ID
+      operationId: getTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/taskIdParam'
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Tasks
+      summary: Update task
+      description: Full update of a task. Managers can reassign tasks.
+      operationId: updateTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/taskIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Tasks
+      summary: Partial update task
+      description: Partial update (e.g., status change only)
+      operationId: patchTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/taskIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete task
+      description: Delete a task
+      operationId: deleteTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/taskIdParam'
+      responses:
+        '204':
+          description: Task deleted successfully
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Assignments ====================
+  /tasks/{taskId}/assign:
+    post:
+      tags:
+        - Assignments
+      summary: Assign task
+      description: Assign or reassign a task to a user. Managers can reassign any team task.
+      operationId: assignTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/taskIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignTaskRequest'
+            example:
+              assigneeId: usr_003
+              note: Reassigned for workload balance
+      responses:
+        '200':
+          description: Task assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid assignee or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Task or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Comments ====================
+  /tasks/{taskId}/comments:
+    get:
+      tags:
+        - Comments
+      summary: List task comments
+      description: Get all comments for a task
+      operationId: listTaskComments
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/taskIdParam'
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+      responses:
+        '200':
+          description: Paginated list of comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Comments
+      summary: Add comment
+      description: Add a comment to a task
+      operationId: addComment
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/taskIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+            example:
+              content: Started working on this. ETA Friday.
+      responses:
+        '201':
+          description: Comment added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+              example:
+                id: cmt_001
+                taskId: tsk_001
+                authorId: usr_001
+                authorName: John Doe
+                content: Started working on this. ETA Friday.
+                createdAt: '2025-03-09T16:00:00Z'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{taskId}/comments/{commentId}:
+    delete:
+      tags:
+        - Comments
+      summary: Delete comment
+      description: Delete a comment (author or admin only)
+      operationId: deleteComment
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/taskIdParam'
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: cmt_001
+      responses:
+        '204':
+          description: Comment deleted successfully
+        '404':
+          description: Comment or task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not comment author or admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Tags ====================
+  /tasks/{taskId}/tags:
+    put:
+      tags:
+        - Tags
+      summary: Update task tags
+      description: Replace all tags on a task
+      operationId: updateTaskTags
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/taskIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTagsRequest'
+            example:
+              tags: ['urgent', 'api', 'design']
+      responses:
+        '200':
+          description: Tags updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Notifications ====================
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List notifications
+      description: Get user's notifications (reminders, assignments, etc.)
+      operationId: listNotifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Paginated list of notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications/{notificationId}/read:
+    patch:
+      tags:
+        - Notifications
+      summary: Mark notification as read
+      description: Mark a notification as read
+      operationId: markNotificationRead
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: ntf_001
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Reports ====================
+  /reports/completed:
+    get:
+      tags:
+        - Reports
+      summary: Completed tasks report
+      description: Report of completed tasks. Managers see team data; admins see all.
+      operationId: getCompletedTasksReport
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: '2025-03-01'
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: '2025-03-31'
+        - $ref: '#/components/parameters/assigneeParam'
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+      responses:
+        '200':
+          description: Completed tasks report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompletedTasksReport'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reports/overdue:
+    get:
+      tags:
+        - Reports
+      summary: Overdue tasks report
+      description: Report of overdue tasks. Auto-flagged by system.
+      operationId: getOverdueTasksReport
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/assigneeParam'
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+      responses:
+        '200':
+          description: Overdue tasks report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverdueTasksReport'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reports/productivity:
+    get:
+      tags:
+        - Reports
+      summary: Productivity metrics
+      description: Productivity metrics (tasks completed, completion rate, etc.)
+      operationId: getProductivityReport
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: '2025-03-01'
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: '2025-03-31'
+        - $ref: '#/components/parameters/assigneeParam'
+      responses:
+        '200':
+          description: Productivity metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductivityReport'
+              example:
+                data:
+                  totalTasks: 120
+                  completedTasks: 95
+                  overdueTasks: 8
+                  completionRate: 0.79
+                  averageCompletionTimeDays: 3.2
+                period:
+                  startDate: '2025-03-01'
+                  endDate: '2025-03-31'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== Users (for assignment lookup) ====================
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List users
+      description: List users for assignment. Role-based visibility.
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+            description: Search by name or email
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+      responses:
+        '200':
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token from login or SSO
+
+  parameters:
+    taskIdParam:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: string
+        example: tsk_001
+    statusParam:
+      name: status
+      in: query
+      schema:
+        type: string
+        enum: [todo, inProgress, blocked, completed]
+    priorityParam:
+      name: priority
+      in: query
+      schema:
+        type: string
+        enum: [low, medium, high, critical]
+    assigneeParam:
+      name: assigneeId
+      in: query
+      schema:
+        type: string
+        example: usr_001
+    overdueParam:
+      name: overdueOnly
+      in: query
+      schema:
+        type: boolean
+        default: false
+    tagParam:
+      name: tag
+      in: query
+      schema:
+        type: string
+        example: urgent
+    pageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 1
+    limitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+        example: 20
+    sortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+        enum: [dueDate, createdAt, priority, status]
+        default: dueDate
+
+  schemas:
+    # --- Error ---
+    Error:
+      type: object
+      required:
+        - code
+        - message
+        - timestamp
+      properties:
+        code:
+          type: string
+          description: Error code for programmatic handling
+          example: TASK_NOT_FOUND
+        message:
+          type: string
+          description: Human-readable error message
+          example: Task with id tsk_999 was not found
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+          example: '2025-03-09T16:30:00Z'
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    # --- Pagination ---
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - totalCount
+        - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          example: 20
+        totalCount:
+          type: integer
+          example: 45
+        totalPages:
+          type: integer
+          example: 3
+
+    # --- Auth ---
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: john.doe@company.com
+        password:
+          type: string
+          format: password
+
+    SsoCallbackRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: SSO provider token
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          description: Token expiry in seconds
+        user:
+          $ref: '#/components/schemas/UserSummary'
+
+    # --- User ---
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: usr_001
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [user, manager, admin]
+
+    User:
+      allOf:
+        - $ref: '#/components/schemas/UserSummary'
+        - type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    UserListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # --- Task ---
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - priority
+      properties:
+        id:
+          type: string
+          example: tsk_001
+        title:
+          type: string
+          example: Complete API design
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [todo, inProgress, blocked, completed]
+        dueDate:
+          type: string
+          format: date
+        assigneeId:
+          type: string
+        assigneeName:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        isOverdue:
+          type: boolean
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+        status:
+          type: string
+          enum: [todo, inProgress, blocked, completed]
+          default: todo
+        dueDate:
+          type: string
+          format: date
+        assigneeId:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+
+    UpdateTaskRequest:
+      $ref: '#/components/schemas/CreateTaskRequest'
+
+    PatchTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [todo, inProgress, blocked, completed]
+        dueDate:
+          type: string
+          format: date
+        assigneeId:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+
+    TaskListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # --- Assignment ---
+    AssignTaskRequest:
+      type: object
+      required:
+        - assigneeId
+      properties:
+        assigneeId:
+          type: string
+        note:
+          type: string
+          maxLength: 500
+
+    # --- Comment ---
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          example: cmt_001
+        taskId:
+          type: string
+        authorId:
+          type: string
+        authorName:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateCommentRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+
+    CommentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # --- Tags ---
+    UpdateTagsRequest:
+      type: object
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+
+    # --- Notification ---
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          example: ntf_001
+        type:
+          type: string
+          enum: [reminder, assignment, overdue, statusChange]
+        title:
+          type: string
+        message:
+          type: string
+        taskId:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # --- Reports ---
+    CompletedTasksReport:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        period:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+
+    OverdueTasksReport:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ProductivityReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            totalTasks:
+              type: integer
+            completedTasks:
+              type: integer
+            overdueTasks:
+              type: integer
+            completionRate:
+              type: number
+              format: float
+            averageCompletionTimeDays:
+              type: number
+              format: float
+        period:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+
+security:
+  - bearerAuth: []
