@@ -50,5 +50,5 @@ export const productivityReportQuerySchema = z.object({
 });
 
 export const userListQuerySchema = paginationQuerySchema.extend({
-  search: z.string().optional(),
+  search: z.string().max(200).optional(),
 });

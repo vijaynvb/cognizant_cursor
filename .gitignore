@@ -1,1 +1,14 @@
-.cursor/hooks/agent-audit.log
+.cursor/hooks/agent-audit.log 
+**/node_modules/**
+**/dist/**
+**/build/**
+**/coverage/**
+**/logs/**
+**/temp/**
+**/cache/**
+**/backup/**
+**/old/**
+**/temp/**
+**/cache/**
+**/backup/**
+**/old/**

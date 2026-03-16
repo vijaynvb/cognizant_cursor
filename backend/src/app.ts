@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { errorHandler } from './errors';
 import { requestIdMiddleware } from './middleware/requestId';
+import { setupSwagger } from './swagger';
 import { authRoutes } from './routes/authRoutes';
 import { taskRoutes } from './routes/taskRoutes';
 import { commentRoutes } from './routes/commentRoutes';
@@ -18,6 +19,8 @@ app.use(cors());
 app.use(express.json());
 app.use(requestIdMiddleware);
 app.use(morgan('combined'));
+
+setupSwagger(app);
 
 app.use('/v1/auth', authRoutes);
 app.use('/v1/tasks', commentRoutes);

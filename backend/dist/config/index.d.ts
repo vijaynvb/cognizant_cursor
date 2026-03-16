@@ -1,6 +1,3 @@
-/**
- * Application configuration loaded from environment variables.
- */
 export declare const config: {
     readonly port: number;
     readonly nodeEnv: string;

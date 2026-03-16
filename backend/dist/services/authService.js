@@ -26,10 +26,10 @@ class AuthService {
         }
         const payload = { userId: user.id, email: user.email, role: user.role };
         const accessToken = jsonwebtoken_1.default.sign(payload, config_1.config.jwtSecret, {
-            expiresIn: config_1.config.jwtExpiresIn,
+            expiresIn: 3600,
         });
         const refreshToken = jsonwebtoken_1.default.sign(payload, config_1.config.jwtSecret, {
-            expiresIn: config_1.config.refreshTokenExpiresIn,
+            expiresIn: 604800,
         });
         refreshTokenStore.set(refreshToken, payload);
         const expiresIn = 3600; // 1 hour in seconds
@@ -55,7 +55,7 @@ class AuthService {
             if (!user) {
                 throw new errors_1.AppError('USER_NOT_FOUND', 'User no longer exists', 401);
             }
-            const accessToken = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email, role: user.role }, config_1.config.jwtSecret, { expiresIn: config_1.config.jwtExpiresIn });
+            const accessToken = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email, role: user.role }, config_1.config.jwtSecret, { expiresIn: 3600 });
             const expiresIn = 3600;
             return {
                 accessToken,

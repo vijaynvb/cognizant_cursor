@@ -44,6 +44,6 @@ exports.productivityReportQuerySchema = zod_1.z.object({
     assigneeId: zod_1.z.string().optional(),
 });
 exports.userListQuerySchema = exports.paginationQuerySchema.extend({
-    search: zod_1.z.string().optional(),
+    search: zod_1.z.string().max(200).optional(),
 });
 //# sourceMappingURL=common.js.map
