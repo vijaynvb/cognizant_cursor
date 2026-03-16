@@ -1,0 +1,609 @@
+{
+  "info": {
+    "name": "To-Do App API",
+    "description": "Internal task-management API for improving productivity, visibility, and accountability. Supports task CRUD, assignment, priorities, due dates, reminders, and basic reporting.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "todo-app"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseURL",
+      "value": "http://localhost:3000/v1"
+    },
+    {
+      "key": "authToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "taskId",
+      "value": ""
+    },
+    {
+      "key": "commentId",
+      "value": ""
+    },
+    {
+      "key": "notificationId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', json.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "    pm.environment.set('authToken', json.accessToken);",
+                  "    pm.environment.set('refreshToken', json.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@company.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseURL}}/auth/login",
+            "description": "Authenticate with email and password. Saves accessToken to collection variable on success."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseURL}}/auth/refresh",
+            "description": "Obtain new access token using refresh token."
+          }
+        },
+        {
+          "name": "SSO Callback",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"sso-provider-token-here\"\n}"
+            },
+            "url": "{{baseURL}}/auth/sso/callback",
+            "description": "Handle SSO provider callback for authentication."
+          }
+        }
+      ],
+      "description": "SSO and internal login"
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "List Tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/tasks?page=1&limit=20&status=&priority=&sort=dueDate",
+              "host": ["{{baseURL}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "", "disabled": true },
+                { "key": "priority", "value": "", "disabled": true },
+                { "key": "assigneeId", "value": "", "disabled": true },
+                { "key": "overdueOnly", "value": "false", "disabled": true },
+                { "key": "tag", "value": "", "disabled": true },
+                { "key": "sort", "value": "dueDate" }
+              ]
+            },
+            "description": "Get paginated list of tasks with optional filters."
+          }
+        },
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('taskId', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Review quarterly report\",\n  \"description\": \"Complete Q1 financial review\",\n  \"priority\": \"high\",\n  \"status\": \"todo\",\n  \"dueDate\": \"2025-03-20\",\n  \"assigneeId\": \"\",\n  \"tags\": [\"finance\", \"quarterly\"]\n}"
+            },
+            "url": "{{baseURL}}/tasks",
+            "description": "Create a new task. Saves taskId to collection variable on success."
+          }
+        },
+        {
+          "name": "Get Task",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseURL}}/tasks/{{taskId}}",
+            "description": "Retrieve a single task by ID."
+          }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Review quarterly report (Updated)\",\n  \"description\": \"Complete Q1 financial review - updated\",\n  \"priority\": \"critical\",\n  \"status\": \"inProgress\",\n  \"dueDate\": \"2025-03-25\",\n  \"tags\": [\"finance\", \"quarterly\", \"urgent\"]\n}"
+            },
+            "url": "{{baseURL}}/tasks/{{taskId}}",
+            "description": "Full update of a task."
+          }
+        },
+        {
+          "name": "Patch Task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": "{{baseURL}}/tasks/{{taskId}}",
+            "description": "Partial update (e.g., status change only)."
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseURL}}/tasks/{{taskId}}",
+            "description": "Delete a task."
+          }
+        }
+      ],
+      "description": "Task CRUD and management"
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "Assign Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assigneeId\": \"usr_003\",\n  \"note\": \"Reassigned for workload balance\"\n}"
+            },
+            "url": "{{baseURL}}/tasks/{{taskId}}/assign",
+            "description": "Assign or reassign a task to a user."
+          }
+        }
+      ],
+      "description": "Task assignment and reassignment"
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "List Task Comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/tasks/{{taskId}}/comments?page=1&limit=20",
+              "host": ["{{baseURL}}"],
+              "path": ["tasks", "{{taskId}}", "comments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Get all comments for a task."
+          }
+        },
+        {
+          "name": "Add Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('commentId', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Started working on this. ETA Friday.\"\n}"
+            },
+            "url": "{{baseURL}}/tasks/{{taskId}}/comments",
+            "description": "Add a comment to a task. Saves commentId on success."
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseURL}}/tasks/{{taskId}}/comments/{{commentId}}",
+            "description": "Delete a comment (author or admin only)."
+          }
+        }
+      ],
+      "description": "Task comments"
+    },
+    {
+      "name": "Tags",
+      "item": [
+        {
+          "name": "Update Task Tags",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tags\": [\"urgent\", \"api\", \"design\"]\n}"
+            },
+            "url": "{{baseURL}}/tasks/{{taskId}}/tags",
+            "description": "Replace all tags on a task."
+          }
+        }
+      ],
+      "description": "Task tags"
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/notifications?page=1&limit=20&unreadOnly=false",
+              "host": ["{{baseURL}}"],
+              "path": ["notifications"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "unreadOnly", "value": "false" }
+              ]
+            },
+            "description": "Get user's notifications (reminders, assignments, etc.)."
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseURL}}/notifications/{{notificationId}}/read",
+            "description": "Mark a notification as read."
+          }
+        }
+      ],
+      "description": "Reminders and notifications"
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Completed Tasks Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/reports/completed?startDate=2025-03-01&endDate=2025-03-31&page=1&limit=20",
+              "host": ["{{baseURL}}"],
+              "path": ["reports", "completed"],
+              "query": [
+                { "key": "startDate", "value": "2025-03-01" },
+                { "key": "endDate", "value": "2025-03-31" },
+                { "key": "assigneeId", "value": "", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Report of completed tasks."
+          }
+        },
+        {
+          "name": "Overdue Tasks Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/reports/overdue?page=1&limit=20",
+              "host": ["{{baseURL}}"],
+              "path": ["reports", "overdue"],
+              "query": [
+                { "key": "assigneeId", "value": "", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Report of overdue tasks."
+          }
+        },
+        {
+          "name": "Productivity Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/reports/productivity?startDate=2025-03-01&endDate=2025-03-31",
+              "host": ["{{baseURL}}"],
+              "path": ["reports", "productivity"],
+              "query": [
+                { "key": "startDate", "value": "2025-03-01" },
+                { "key": "endDate", "value": "2025-03-31" },
+                { "key": "assigneeId", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Productivity metrics (tasks completed, completion rate, etc.)."
+          }
+        }
+      ],
+      "description": "Completed, overdue, and productivity metrics"
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/users?page=1&limit=20",
+              "host": ["{{baseURL}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "List users for assignment. Role-based visibility."
+          }
+        }
+      ],
+      "description": "User listing for assignment lookup"
+    },
+    {
+      "name": "Negative Tests",
+      "item": [
+        {
+          "name": "Login - Invalid Credentials",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invalid@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": "{{baseURL}}/auth/login",
+            "description": "Expect 400 - Invalid credentials."
+          }
+        },
+        {
+          "name": "Login - Missing Body",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{baseURL}}/auth/login",
+            "description": "Expect 400 - Validation error (missing email/password)."
+          }
+        },
+        {
+          "name": "Login - Invalid Email Format",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseURL}}/auth/login",
+            "description": "Expect 400 - Validation error (invalid email format)."
+          }
+        },
+        {
+          "name": "List Tasks - No Auth",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseURL}}/tasks",
+            "description": "Expect 401 - Unauthorized (missing Bearer token)."
+          }
+        },
+        {
+          "name": "Delete Task - Not Found",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseURL}}/tasks/non_existent_task_id_999",
+            "description": "Expect 404 - Task not found."
+          }
+        },
+        {
+          "name": "Refresh Token - Invalid",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"invalid_or_expired_token\"\n}"
+            },
+            "url": "{{baseURL}}/auth/refresh",
+            "description": "Expect 401 - Invalid or expired refresh token."
+          }
+        },
+        {
+          "name": "Create Task - Empty Title",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"description\": \"Task with empty title\"\n}"
+            },
+            "url": "{{baseURL}}/tasks",
+            "description": "Expect 400 - Validation error (title required)."
+          }
+        },
+        {
+          "name": "Add Comment - Empty Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"\"\n}"
+            },
+            "url": "{{baseURL}}/tasks/{{taskId}}/comments",
+            "description": "Expect 400 - Validation error (content required)."
+          }
+        }
+      ],
+      "description": "Negative test cases for error handling validation"
+    }
+  ]
+}

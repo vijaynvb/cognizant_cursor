@@ -693,6 +693,90 @@ flowchart TB
 
 ---
 
+### 3.1 Cloud Architecture Diagram
+
+Cloud deployment view showing how the To-Do App runs on Kubernetes within a cloud provider (AWS, Azure, or GCP). Environments: dev, staging, prod.
+
+```mermaid
+flowchart TB
+    subgraph Internet["Internet"]
+        Users["Users / Browsers"]
+    end
+
+    subgraph Cloud["Cloud Provider (AWS / Azure / GCP)"]
+        subgraph Edge["Edge / CDN"]
+            CDN["CDN / Static Assets"]
+            ALB["Application Load Balancer"]
+        end
+
+        subgraph VPC["VPC"]
+            subgraph K8s["Kubernetes Cluster"]
+                subgraph Ingress["Ingress Controller"]
+                    IngressCtrl["Ingress (TLS termination)"]
+                end
+
+                subgraph FrontendNS["Frontend Namespace"]
+                    ReactPods["React App Pods"]
+                    ReactSvc["Frontend Service"]
+                end
+
+                subgraph BackendNS["Backend Namespace"]
+                    ExpressPods["Express API Pods"]
+                    ExpressSvc["Backend Service"]
+                end
+
+                subgraph Middleware["Platform Services"]
+                    Secrets["Secrets Manager"]
+                    ConfigMaps["ConfigMaps"]
+                end
+            end
+
+            subgraph Data["Data Tier"]
+                RDS["Managed PostgreSQL"]
+            end
+        end
+
+        subgraph External["External Services"]
+            SSO["SSO Provider"]
+            Email["Email Service"]
+            Slack["Slack (Future)"]
+        end
+    end
+
+    %% Traffic flow
+    Users -->|"HTTPS"| CDN
+    CDN -->|"Static assets"| Users
+    Users -->|"API / SPA"| ALB
+    ALB --> IngressCtrl
+    IngressCtrl --> ReactSvc
+    IngressCtrl --> ExpressSvc
+    ReactSvc --> ReactPods
+    ExpressSvc --> ExpressPods
+
+    %% Backend to data
+    ExpressPods -->|"SQL"| RDS
+    ExpressPods --> Secrets
+    ExpressPods --> ConfigMaps
+
+    %% External integrations
+    ExpressPods -.->|"Auth"| SSO
+    ExpressPods -.->|"Notifications"| Email
+    ExpressPods -.->|"Future"| Slack
+```
+
+**Cloud deployment summary:**
+
+| Component | Cloud Implementation |
+|-----------|----------------------|
+| **Frontend** | React SPA served from CDN or via Ingress; runs in K8s pods |
+| **Backend** | Express API in K8s Deployment; scaled via replicas (dev: 1, staging: 2, prod: 3+) |
+| **Database** | Managed PostgreSQL (RDS, Azure Database, Cloud SQL) |
+| **Secrets** | K8s Secrets or cloud Secrets Manager (DB credentials, JWT keys) |
+| **Environments** | Namespaces: `app-dev`, `app-staging`, `app-prod` |
+| **Ingress** | TLS termination, routing to frontend/backend services |
+
+---
+
 ## 4. Data Flow Summary
 
 | Operation        | Frontend → Controller → Service → Repository → DB |

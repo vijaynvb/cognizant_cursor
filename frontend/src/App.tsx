@@ -50,14 +50,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/tasks/new"
-        element={
-          <ProtectedRoute>
-            <TaskDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/tasks/:id"
         element={
           <ProtectedRoute>
