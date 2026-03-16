@@ -1,1 +1,0 @@
-{"version":3,"file":"comment.js","sourceRoot":"","sources":["../../src/validators/comment.ts"],"names":[],"mappings":";;;AAAA,6BAAwB;AAEX,QAAA,mBAAmB,GAAG,OAAC,CAAC,MAAM,CAAC;IAC1C,IAAI,EAAE,OAAC,CAAC,MAAM,CAAC;QACb,OAAO,EAAE,OAAC,CAAC,MAAM,EAAE,CAAC,GAAG,CAAC,CAAC,EAAE,qBAAqB,CAAC,CAAC,GAAG,CAAC,IAAI,CAAC;KAC5D,CAAC;CACH,CAAC,CAAC"}
