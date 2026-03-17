@@ -1,0 +1,186 @@
+/* ===== Base & Typography ===== */
+:root {
+  --bg-warm:    #e8ddd3;
+  --bg-card:    #d9ccbf;
+  --text-dark:  #3b2f2f;
+  --text-mid:   #5c4b3e;
+  --text-light: #7a6a5e;
+  --accent:     #6b4226;
+  --white:      #ffffff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+  color: var(--text-dark);
+  background-color: var(--bg-warm);
+}
+
+/* ===== Accommodations Section ===== */
+.accommodations-section {
+  padding: 80px 0 100px;
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 400;
+  font-size: 2.75rem;
+  color: var(--text-dark);
+  margin-bottom: 50px;
+  letter-spacing: 1px;
+}
+
+/* ===== Room Card ===== */
+.room-card {
+  background: var(--white);
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  cursor: pointer;
+}
+
+.room-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 36px rgba(59, 47, 47, 0.15);
+}
+
+/* Image wrapper */
+.room-image-wrapper {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+
+.room-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.room-card:hover .room-image {
+  transform: scale(1.06);
+}
+
+.room-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(59, 47, 47, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.room-card:hover .room-overlay {
+  opacity: 1;
+}
+
+.view-details-btn {
+  color: var(--white);
+  border: 1.5px solid var(--white);
+  padding: 8px 22px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.view-details-btn:hover {
+  background: var(--white);
+  color: var(--text-dark);
+}
+
+/* Room info */
+.room-info {
+  background-color: var(--bg-card);
+  padding: 20px 24px 24px;
+}
+
+.room-capacity {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-light);
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+
+.room-name {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.room-price {
+  font-size: 0.9rem;
+  color: var(--text-mid);
+  margin-bottom: 0;
+}
+
+.room-price strong {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* ===== Modal ===== */
+.modal-content {
+  border-radius: 2px;
+  border: none;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--bg-card);
+}
+
+.modal-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.modal-description {
+  color: var(--text-mid);
+  line-height: 1.75;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--bg-card);
+}
+
+.btn-book {
+  background-color: var(--accent);
+  color: var(--white);
+  border: none;
+  padding: 8px 28px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-book:hover {
+  background-color: #54331c;
+  color: var(--white);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 767.98px) {
+  .section-title {
+    font-size: 2rem;
+    margin-bottom: 32px;
+  }
+
+  .accommodations-section {
+    padding: 48px 0 64px;
+  }
+}

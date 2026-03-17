@@ -1,5 +1,12 @@
-.cursor/hooks/agent-audit.log 
+.cursor/hooks/agent-audit.log
 **/node_modules/**
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
 **/dist/**
 **/build/**
 **/coverage/**
