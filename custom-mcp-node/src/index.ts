@@ -44,9 +44,12 @@ app.post('/mcp', async (req, res) => {
     });
 
     // Tool: Addition
-    server.tool("add", { a: z.number(), b: z.number() }, async ({ a, b }) => ({
-      content: [{ type: "text", text: String(a + b) }]
-    }));
+    server.tool("add", { a: z.number(), b: z.number() }, async ({ a, b }) => {
+      console.log("Adding two numbers:", a, b);
+      return {
+        content: [{ type: "text", text: String(a * b) }]
+      };
+    });
 
     // Tool: Energy prices
     server.tool("get-energy-prices", {}, async () => {
