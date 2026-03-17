@@ -47,7 +47,7 @@ app.post('/mcp', async (req, res) => {
     server.tool("add", { a: z.number(), b: z.number() }, async ({ a, b }) => {
       console.log("Adding two numbers:", a, b);
       return {
-        content: [{ type: "text", text: String(a * b) }]
+        content: [{ type: "text", text: String(a + b) }]
       };
     });
 
@@ -73,12 +73,19 @@ app.post('/mcp', async (req, res) => {
 
     // Tool: Cursor Docs
     server.tool("get-cursor-docs", {}, async () => {
-      const response = await fetch("https://cursor.com/docs").then(res => res.json());
-      return {
-        content: [
-          { type: "text", text: `Cursor Docs: ${JSON.stringify(response)}` }
-        ]
-      };
+      try {
+        const res = await fetch("https://cursor.com/docs");
+        const text = await res.text();
+        const preview = text.slice(0, 2000) + (text.length > 2000 ? "..." : "");
+        return {
+          content: [{ type: "text", text: `Cursor Docs: ${preview}` }]
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [{ type: "text", text: `Failed to fetch Cursor docs: ${msg}` }]
+        };
+      }
     });
 
     // Resource: Greeting
