@@ -1,0 +1,26 @@
+0. MCP concepts 
+1. Custom MCP 
+2. Multi Model Responses
+3. Debug mode
+4. BugBot -> SCM: reviewing and also fixing the issues identified dynamically
+5. playwright
+
+MCP concepts: Antropic open standard 
+
+        AI -> MCP Client -> MCP Servre -> Datasource
+    1.  [AI -> MCP Client] -> [Remote serve] {MCP Servre -> Datasource}
+    2.  [AI -> MCP Client] -> [Local]{MCP Servre ->  [Remote serve] [Datasource} Figma
+    3.  [AI -> MCP Client] -> [Local][MCP Servre -> Datasource]
+
+
+Bug Bot: special service + pro version + 7 days for free 
+
+1. create a  branch 
+2. fix your issue 
+3. push your code 
+4. github pull request [github - cursor agent [cloud service] 
+    1. per review 
+    2. comment will be given 
+        1. problems are their then it should be fixed, you can atutomaitically trigger coursor agent to fix 
+    3. accept merged into your main branch 
+
