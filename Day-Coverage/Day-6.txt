@@ -1,0 +1,13 @@
+0. MCP concepts 
+1. Custom MCP 
+2. Multi Model Responses
+3. Debug mode
+4. BugBot -> SCM: reviewing and also fixing the issues identified dynamically
+5. playwright
+
+MCP concepts: Antropic open standard 
+
+        AI -> MCP Client -> MCP Servre -> Datasource
+    1.  [AI -> MCP Client] -> [Remote serve] {MCP Servre -> Datasource}
+    2.  [AI -> MCP Client] -> [Local]{MCP Servre ->  [Remote serve] [Datasource} Figma
+    3.  [AI -> MCP Client] -> [Local][MCP Servre -> Datasource]
