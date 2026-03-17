@@ -1,4 +1,4 @@
-# To-Do App
+To-Do App - mae for cognizant
 
 Full-stack task management application with Express (TypeScript) backend and React frontend.
 
